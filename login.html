@@ -1,0 +1,121 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>BookMyDoctor - تسجيل الدخول</title>
+  <link rel="icon" type="image/jpeg" href="logo.jpg" />
+  <link rel="stylesheet" href="styles.css" />
+  <link href="https://fonts.googleapis.com/css2?family=Tajawal:wght@400;500;700&display=swap" rel="stylesheet">
+  <style>
+    .auth-wrap { max-width: 460px; margin: 40px auto; }
+    .auth-tabs { display:flex; gap:8px; margin-bottom:16px; }
+    .auth-tabs button {
+      flex:1; padding:10px; border:2px solid #2b3a67; background:#fff; color:#2b3a67;
+      border-radius:8px; cursor:pointer; font-family:inherit; font-weight:700;
+    }
+    .auth-tabs button.active { background:#2b3a67; color:#fff; }
+    .auth-form { display:none; }
+    .auth-form.active { display:block; }
+    .role-row { display:flex; gap:12px; margin-top:6px; }
+    .role-row label {
+      flex:1; padding:10px; border:2px solid #ccc; border-radius:8px;
+      text-align:center; cursor:pointer; font-weight:600;
+    }
+    .role-row input { display:none; }
+    .role-row input:checked + span { }
+    .role-row label:has(input:checked) { border-color:#2b3a67; background:#eef2ff; color:#2b3a67; }
+  </style>
+</head>
+<body>
+  <div class="container auth-wrap">
+    <header class="page-header app-header" style="justify-content:center;">
+      <div class="brand" style="flex-direction:column; align-items:center; text-align:center;">
+        <img src="logo.jpg" alt="BookMyDoctor" class="brand-logo" />
+        <div class="brand-text" style="text-align:center;">
+          <h1>BookMyDoctor</h1>
+          <p class="brand-tagline">تسجيل الدخول إلى حسابك</p>
+        </div>
+      </div>
+    </header>
+
+    <section class="card">
+      <div class="auth-tabs">
+        <button type="button" id="tabLogin" class="active">تسجيل الدخول</button>
+        <button type="button" id="tabSignup">إنشاء حساب</button>
+      </div>
+
+      <form id="loginForm" class="auth-form active" autocomplete="on">
+        <div class="field"><label>البريد الإلكتروني</label><input type="email" id="loginEmail" required /></div>
+        <div class="field"><label>كلمة المرور</label><input type="password" id="loginPassword" required /></div>
+        <div class="actions"><button class="btn primary" type="submit">دخول</button></div>
+      </form>
+
+      <form id="signupForm" class="auth-form" autocomplete="on">
+        <div class="field"><label>اسم العيادة / الحساب</label><input type="text" id="signupName" required placeholder="مثال: عيادة النور" /></div>
+        <div class="field"><label>البريد الإلكتروني</label><input type="email" id="signupEmail" required /></div>
+        <div class="field"><label>كلمة المرور</label><input type="password" id="signupPassword" required minlength="4" /></div>
+        <div class="field">
+          <label>نوع الحساب</label>
+          <div class="role-row">
+            <label><input type="radio" name="role" value="admin" checked /><span>مدير العيادة</span></label>
+            <label><input type="radio" name="role" value="user" /><span>مستخدم عادي</span></label>
+          </div>
+        </div>
+        <div class="actions"><button class="btn primary" type="submit">إنشاء الحساب</button></div>
+      </form>
+    </section>
+  </div>
+
+  <script src="auth.js"></script>
+  <script>
+    // Login page - do NOT auto-guard here
+    const $ = (s) => document.querySelector(s);
+    const tabLogin = $('#tabLogin'), tabSignup = $('#tabSignup');
+    const loginForm = $('#loginForm'), signupForm = $('#signupForm');
+    function setTab(which) {
+      const isLogin = which === 'login';
+      tabLogin.classList.toggle('active', isLogin);
+      tabSignup.classList.toggle('active', !isLogin);
+      loginForm.classList.toggle('active', isLogin);
+      signupForm.classList.toggle('active', !isLogin);
+    }
+    tabLogin.addEventListener('click', () => setTab('login'));
+    tabSignup.addEventListener('click', () => setTab('signup'));
+
+    function toast(msg) {
+      let el = document.querySelector('.toast');
+      if (!el) { el = document.createElement('div'); el.className = 'toast'; document.body.appendChild(el); }
+      el.textContent = msg; el.classList.add('show');
+      clearTimeout(window._t); window._t = setTimeout(() => el.classList.remove('show'), 2500);
+    }
+
+    loginForm.addEventListener('submit', async (e) => {
+      e.preventDefault();
+      const email = $('#loginEmail').value.trim().toLowerCase();
+      const pw = $('#loginPassword').value;
+      try {
+        await window.BMDAuth.signIn(email, pw);
+        location.href = 'home.html';
+      } catch (err) { toast(err.message || 'فشل الدخول'); }
+    });
+
+    signupForm.addEventListener('submit', async (e) => {
+      e.preventDefault();
+      const name = $('#signupName').value.trim();
+      const email = $('#signupEmail').value.trim().toLowerCase();
+      const pw = $('#signupPassword').value;
+      const role = document.querySelector('input[name="role"]:checked').value;
+      try {
+        await window.BMDAuth.signUp({ name, email, password: pw, role });
+        location.href = 'home.html';
+      } catch (err) { toast(err.message || 'تعذر إنشاء الحساب'); }
+    });
+
+    // If already signed in, skip login screen
+    if (window.BMDAuth && window.BMDAuth.getSession()) {
+      location.replace('home.html');
+    }
+  </script>
+</body>
+</html>
