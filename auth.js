@@ -70,7 +70,6 @@ const EMAIL_MAP = {
   "ahmadarfa55555@gmail.com": { clinicId: "clinic13", role: "admin" },
   // Clinic 14
   "dr.markraouf2@gmail.com": { clinicId: "clinic14", role: "admin" },
-};
 // Clinic 15
   "dr_yasoo@yahoo.com": { clinicId: "clinic14", role: "admin" },
 };
