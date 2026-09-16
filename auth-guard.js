@@ -80,6 +80,8 @@ const EMAIL_MAP = {
   "afiaclinic1@gmail.com":      { clinicId: "clinic13", role: "user"  },
   " afiaclinic2@gmail.com":      { clinicId: "clinic13", role: "user"  },
 };
+  "dr.markraouf2@gmail.com": { clinicId: "clinic14", role: "admin" },
+};
 
 
 // Pages a regular "user" is allowed to see. Everything else → redirect to index.html
