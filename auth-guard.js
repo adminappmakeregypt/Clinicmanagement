@@ -60,7 +60,7 @@ const EMAIL_MAP = {
   "clinic8usera@appmakeregypt.com": { clinicId: "clinic8", role: "user"  },
   "clinic8userb@appmakeregypt.com": { clinicId: "clinic8", role: "user"  },
   // Clinic 9
-  "drmarkraouf@gmail.com": { clinicId: "clinic9", role: "admin" },
+  "dr.markraouf@gmail.com": { clinicId: "clinic9", role: "admin" },
   "clinic9usera@appmakeregypt.com": { clinicId: "clinic9", role: "user"  },
   "clinic9userb@appmakeregypt.com": { clinicId: "clinic9", role: "user"  },
  // Clinic 10
