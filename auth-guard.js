@@ -60,11 +60,11 @@ const EMAIL_MAP = {
   "clinic8usera@appmakeregypt.com": { clinicId: "clinic8", role: "user"  },
   "clinic8userb@appmakeregypt.com": { clinicId: "clinic8", role: "user"  },
   // Clinic 9
-  "clinic9admin@appmakeregypt.com": { clinicId: "clinic9", role: "admin" },
+  "drmarkraouf@gmail.com": { clinicId: "clinic9", role: "admin" },
   "clinic9usera@appmakeregypt.com": { clinicId: "clinic9", role: "user"  },
   "clinic9userb@appmakeregypt.com": { clinicId: "clinic9", role: "user"  },
  // Clinic 10
-  "Dr.markraouf2@gmail.com": { clinicId: "clinic10", role: "admin" },
+  "clinic10admin@appmakeregypt.com": { clinicId: "clinic10", role: "admin" },
   "clinic10usera@appmakeregypt.com": { clinicId: "clinic10", role: "user"  },
   "clinic10userb@appmakeregypt.com": { clinicId: "clinic10", role: "user"  },
   // Clinic 11
