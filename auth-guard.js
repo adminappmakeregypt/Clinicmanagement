@@ -87,8 +87,9 @@ const EMAIL_MAP = {
   "dr.samy@ymail.com": { clinicId: "clinic17", role: "admin" },
   // Clinic 18
   "mohamed028483@gmail.com": { clinicId: "clinic18", role: "admin" },
+  // Clinic 19
+  "ibrahimarafa95@yahoo.com": { clinicId: "clinic19", role: "admin" },
 };
-
 
 // Pages a regular "user" is allowed to see. Everything else → redirect to index.html
 const USER_ALLOWED_PAGES = ["index.html", ""];
