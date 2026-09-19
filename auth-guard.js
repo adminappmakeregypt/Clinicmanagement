@@ -83,6 +83,8 @@ const EMAIL_MAP = {
   "dr_yasoo83@yahoo.com": { clinicId: "clinic15", role: "admin" },
     // Clinic 16
   "magid.m@gmail.com": { clinicId: "clinic16", role: "admin" },
+     // Clinic 17
+  "dr.samy@ymail.com": { clinicId: "clinic17", role: "admin" },
 };
 
 
