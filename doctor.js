@@ -2,7 +2,7 @@
 // الطبيب يختار المريض + التخصص، فتظهر مميزات هذا التخصص (نفس نموذج الأسنان مثلاً)
 // ويمكنه إضافة أكثر من تسجيل، لكل تسجيل تاريخ زيارة، وتظهر كلها في التاريخ المرضي.
 //
-// التخزين داخل نفس مشروع Firebase الحالي (بدون بنية جديدة):
+// التخزين داخل نفس مشروع Firebase الحالي:
 //   Firestore: clinics/{clinicId}/patientRecords/{patientId}  ->  { records: [...] }
 //   الملفات   : attachments.js (Firebase Storage)
 // نسخة محلية في localStorage: clinic_patient_records_v1
@@ -12,10 +12,18 @@ import {
   doc, getDoc, setDoc,
 } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
 
-const CLINIC_ID = window.CLINIC_ID || "__anon__";
-const ck = window.clinicKey || ((n) => n);
-const LOCAL_KEY = ck("clinic_patient_records_v1");
-const BOOKINGS_KEY = ck("clinic_bookings_v1");
+function getClinicId() {
+  return (
+    window.CLINIC_ID ||
+    localStorage.getItem(window.__BMD_LAST_CLINIC_KEY || "bmd::lastClinicId") ||
+    "__anon__"
+  );
+}
+
+function getLocalKey(name) {
+  if (window.clinicKey) return window.clinicKey(name);
+  return "bmd::" + getClinicId() + "::" + name;
+}
 
 const $ = (s) => document.querySelector(s);
 const esc = (s) =>
@@ -25,12 +33,24 @@ const esc = (s) =>
 
 const today = () => new Date().toISOString().slice(0, 10);
 
+async function getAuthUser() {
+  if (auth.currentUser) return auth.currentUser;
+  return new Promise((resolve) => {
+    const unsubscribe = auth.onAuthStateChanged((user) => {
+      try { unsubscribe(); } catch {}
+      resolve(user);
+    });
+    setTimeout(() => resolve(auth.currentUser), 2000);
+  });
+}
+
 /* ---------- patients (from the existing bookings) ---------- */
 function normPhone(p) { return (p || "").toString().replace(/\D/g, ""); }
 
 function allPatients() {
   let list = [];
-  try { list = JSON.parse(localStorage.getItem(BOOKINGS_KEY) || "[]"); } catch { list = []; }
+  const bookingsKey = getLocalKey("clinic_bookings_v1");
+  try { list = JSON.parse(localStorage.getItem(bookingsKey) || "[]"); } catch { list = []; }
   const map = new Map();
   list.forEach((b) => {
     const key = (normPhone(b.phone) || "") + "|" + ((b.fullName || "").trim().toLowerCase());
@@ -52,19 +72,24 @@ function docId(patient) {
 
 /* ---------- storage ---------- */
 function localAll() {
-  try { return JSON.parse(localStorage.getItem(LOCAL_KEY) || "{}"); } catch { return {}; }
+  const localKey = getLocalKey("clinic_patient_records_v1");
+  try { return JSON.parse(localStorage.getItem(localKey) || "{}"); } catch { return {}; }
 }
+
 function localPut(id, data) {
+  const localKey = getLocalKey("clinic_patient_records_v1");
   const all = localAll();
   all[id] = data;
-  try { localStorage.setItem(LOCAL_KEY, JSON.stringify(all)); } catch {}
+  try { localStorage.setItem(localKey, JSON.stringify(all)); } catch {}
 }
 
 async function loadRecords(id) {
   const cached = localAll()[id] || null;
+  const clinicId = getClinicId();
   try {
-    if (auth.currentUser) {
-      const snap = await getDoc(doc(db, "clinics", CLINIC_ID, "patientRecords", id));
+    const user = await getAuthUser();
+    if (user && clinicId !== "__anon__") {
+      const snap = await getDoc(doc(db, "clinics", clinicId, "patientRecords", id));
       if (snap.exists()) {
         const data = snap.data();
         localPut(id, data);
@@ -78,6 +103,8 @@ async function loadRecords(id) {
 }
 
 async function saveRecords(id, patient, records) {
+  const clinicId = getClinicId();
+  const user = await getAuthUser();
   const data = {
     id,
     patientKey: patient.key || "",
@@ -85,11 +112,13 @@ async function saveRecords(id, patient, records) {
     phone: patient.phone || "",
     records,
     updatedAt: new Date().toISOString(),
-    updatedBy: (auth.currentUser && auth.currentUser.email) || "",
+    updatedBy: (user && user.email) || "",
   };
   localPut(id, data);
-  if (!auth.currentUser) throw new Error("not-signed-in");
-  await setDoc(doc(db, "clinics", CLINIC_ID, "patientRecords", id), data);
+  if (!user) throw new Error("not-signed-in");
+  if (clinicId === "__anon__") throw new Error("clinic-not-resolved");
+
+  await setDoc(doc(db, "clinics", clinicId, "patientRecords", id), data);
 }
 
 /* ---------- state ---------- */
@@ -102,6 +131,7 @@ let specialtyId = null;
 function renderPatientOptions() {
   patients = allPatients();
   const dl = $("#dpPatients");
+  if (!dl) return;
   dl.innerHTML = patients
     .map((p) => `<option value="${esc(p.fullName + (p.phone ? " — " + p.phone : ""))}"></option>`)
     .join("");
@@ -122,7 +152,9 @@ function findPatient(text) {
 
 function renderSpecialtySelect() {
   const SP = window.ClinicSpecialty;
+  if (!SP) return;
   const sel = $("#dpSpecialty");
+  if (!sel) return;
   specialtyId = specialtyId || SP.currentId();
   sel.innerHTML = SP.list()
     .map((s) => `<option value="${s.id}"${s.id === specialtyId ? " selected" : ""}>${s.icon} ${esc(s.label)}</option>`)
@@ -132,6 +164,7 @@ function renderSpecialtySelect() {
 function renderForm(values) {
   const SP = window.ClinicSpecialty;
   const box = $("#dpForm");
+  if (!SP || !box) return;
   box.innerHTML = SP.formHtml(values || {}, specialtyId);
   SP.wire(box, specialtyId);
 }
@@ -139,6 +172,7 @@ function renderForm(values) {
 function renderHistory() {
   const SP = window.ClinicSpecialty;
   const tbody = $("#dpHistory tbody");
+  if (!tbody || !SP) return;
   const sorted = records.slice().sort((a, b) => (b.visitDate || "").localeCompare(a.visitDate || ""));
   tbody.innerHTML = sorted
     .map((r) => {
@@ -193,7 +227,7 @@ function modal(title, bodyHtml) {
 function viewRecord(id) {
   const SP = window.ClinicSpecialty;
   const r = records.find((x) => x.id === id);
-  if (!r) return;
+  if (!r || !SP) return;
   const rows = SP.summaryRows(r.exam) || [];
   const body =
     `<div class="dc-head">
@@ -239,6 +273,7 @@ async function saveNew() {
   const visitDate = $("#dpVisitDate").value || today();
   const collected = SP.collect($("#dpForm"), specialtyId);
   if (!collected) { alert("من فضلك املأ بيانات الفحص أولاً."); return; }
+  const user = await getAuthUser();
   const rec = {
     id: "r" + Date.now(),
     visitDate,
@@ -248,23 +283,22 @@ async function saveNew() {
     patientName: patient.fullName,
     exam: collected,
     createdAt: new Date().toISOString(),
-    createdBy: (auth.currentUser && auth.currentUser.email) || "",
+    createdBy: (user && user.email) || "",
   };
   records.push(rec);
   const status = $("#dpStatus");
-  status.textContent = "جارٍ الحفظ...";
+  status.textContent = "جارٍ الحفظ على السحابة...";
   try {
     await saveRecords(docId(patient), patient, records);
-    status.textContent = "تم حفظ التسجيل ✔";
+    status.textContent = "تم حفظ التسجيل في السحابة ✔";
   } catch (e) {
-    console.warn(e);
-    status.textContent = "تم الحفظ محلياً فقط (تعذر الاتصال).";
+    console.warn("Cloud save failed, local only:", e);
+    status.textContent = "تم الحفظ محلياً فقط (" + (e && e.message ? e.message : "تعذر الاتصال") + ").";
   }
   renderHistory();
   renderForm({});
-  setTimeout(() => { status.textContent = ""; }, 2500);
+  setTimeout(() => { if (status) status.textContent = ""; }, 3000);
 }
-
 
 /* ---------- 💊 الروشتات الإلكترونية ---------- */
 function rxReady() {
