@@ -73,7 +73,6 @@
         <span class="dc-status muted" id="dpStatus"></span>
       </div>
 
-
       <h3 style="margin-top:20px;">💊 الروشتات الإلكترونية (<span id="dpRxCount">0</span>)</h3>
       <div class="actions" style="margin-bottom:10px;">
         <button class="btn primary" id="dpRxNew" type="button">➕ إنشاء روشتة جديدة</button>
@@ -163,10 +162,11 @@
   <script src="pediatrics.js?v=2"></script>
   <script src="dermatology.js?v=1"></script>
   <script src="orthopedics.js?v=1"></script>
-  <script type="module" src="attachments.js?v=1"></script>
-  <script type="module" src="auth.js?v=20"></script>
+  <!-- auth.js يجب أن يُحمّل قبل باقي الوحدات لتهيئة معرف العيادة وجلسة المستخدم -->
+  <script type="module" src="auth.js?v=21"></script>
+  <script type="module" src="attachments.js?v=2"></script>
   <script type="module" src="cloud-sync.js?v=3"></script>
   <script type="module" src="prescriptions.js?v=3"></script>
-  <script type="module" src="doctor.js?v=2"></script>
+  <script type="module" src="doctor.js?v=3"></script>
 </body>
 </html>
