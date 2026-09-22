@@ -80,6 +80,8 @@ const EMAIL_MAP = {
   "mohamed028483@gmail.com": { clinicId: "clinic18", role: "admin" },
   // Clinic 19
   "ibrahimarafa95@yahoo.com": { clinicId: "clinic19", role: "admin" },
+  // Clinic 20
+  "flash.star.2010@gmail.com": { clinicId: "clinic20", role: "admin" },
 };
 
 const LOGIN_PAGE = "login.html";
