@@ -8,12 +8,14 @@
     catch { return []; }
   }
 
-  function normalizePhone(p) { return (p || '').toString().replace(/\D/g, ''); }
+  function normalizePhone(p) { let d = (p || '').toString().replace(/\D/g, ''); if (d.startsWith('00')) d = d.slice(2); if (d.length === 12 && d.startsWith('20')) d = d.slice(2); if (d.length === 11 && d.startsWith('0')) d = d.slice(1); return d; }
 
   function groupByPatient(list) {
     const map = new Map();
     list.forEach(b => {
-      const key = (normalizePhone(b.phone) || '') + '|' + ((b.fullName || '').trim().toLowerCase());
+      // the mobile number identifies the patient; the name is used only when no number exists
+      const ph = normalizePhone(b.phone);
+      const key = ph ? 'tel:' + ph : '|' + ((b.fullName || '').trim().toLowerCase());
       if (!map.has(key)) {
         map.set(key, {
           key,

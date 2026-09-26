@@ -65,6 +65,14 @@ async function saveBookings(list) {
   });
 }
 
+function canonPhone(p) {
+  let d = (p || "").toString().replace(/\D/g, "");
+  if (d.startsWith("00")) d = d.slice(2);
+  if (d.length === 12 && d.startsWith("20")) d = d.slice(2);
+  if (d.length === 11 && d.startsWith("0")) d = d.slice(1);
+  return d;
+}
+
 async function importRequest(snap) {
   const r = snap.data() || {};
   if (r.clinicId && r.clinicId !== clinicId) return; // never import another clinic's request
@@ -75,12 +83,19 @@ async function importRequest(snap) {
     const docName = nameOfId(r.doctorId) || r.doctor || "";
     const clash = bookings.some((b) => b.appointmentDate === r.date && b.appointmentTime === r.time && isActive(b) &&
       (!b.doctor || bookingDoctorId(b) === r.doctorId));
-    const notes = [clash ? "⚠️ تعارض مع حجز آخر في نفس الموعد" : "", "حجز من الموقع — رقم " + (r.ref || ""), r.notes || ""]
+    // returning patient: same mobile number → reuse the saved file (name + profile)
+    const ph = canonPhone(r.phone);
+    const prev = ph ? bookings.filter((b) => canonPhone(b.phone) === ph)
+      .sort((a, b) => String(b.createdAt || "").localeCompare(String(a.createdAt || "")))[0] : null;
+    const typed = (r.fullName || "").trim();
+    const nameNote = prev && typed && prev.fullName && prev.fullName.trim() !== typed ? "الاسم المكتوب في الموقع: " + typed : "";
+    const notes = [clash ? "⚠️ تعارض مع حجز آخر في نفس الموعد" : "", "حجز من الموقع — رقم " + (r.ref || ""), nameNote, r.notes || ""]
       .filter(Boolean).join(" — ");
     bookings.push({
       id,
-      fullName: r.fullName || "", idNumber: "", birthDate: "",
-      phone: r.phone || "", gender: "", email: "",
+      fullName: (prev && prev.fullName) || typed, idNumber: (prev && prev.idNumber) || "", birthDate: (prev && prev.birthDate) || "",
+      phone: (prev && prev.phone) || r.phone || "", gender: (prev && prev.gender) || "", email: (prev && prev.email) || "",
+      returningPatient: !!prev,
       specialty: "", condition: "",
       appointmentDate: r.date || "", doctor: docName, doctorId: r.doctorId || "",
       appointmentTime: r.time || "", duration: String(admin.slotMinutes || 30),
